@@ -1,9 +1,4 @@
-
-def imgWasAdded_2(Q, a):
-    return a < Q.shape[1] - 1
-
-
-def scoreAgent(agent, env, numImgs, imgAddedCond, printInterval=50):
+def scoreAgent(agent, env, numImgs, printInterval=50):
     state = env.reset()
     lossProg = []
     f1Prog = []
@@ -13,7 +8,7 @@ def scoreAgent(agent, env, numImgs, imgAddedCond, printInterval=50):
         Q, a = agent.predict(state, greedParameter=0)
         state, reward, done, _ = env.step(a)
 
-        if imgAddedCond(Q, a):
+        if a < Q.shape[1] - 1:
             for _ in range(env.imgsToAvrg):
                 f1Prog.append(env.currentTestF1)
                 lossProg.append(env.currentTestLoss)

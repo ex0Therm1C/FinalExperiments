@@ -85,6 +85,138 @@ class ICGameBase:
         
 
 
+class ImageClassificationGame_1(ICGameBase):
+
+    def __init__(self, dataset, modelFunction, rewardShaping, sampleSize=5, budget=800, verbose=True,
+                 labelCost=0.0, imgsToAvrg=5, gameLength=50, maxInteractions=300, rewardScaling=10):
+        del gameLength
+        del rewardScaling
+        del imgsToAvrg
+        self.sampleSize = 1
+        self.imgsToAvrg = 1
+        self.rewardShaping = rewardShaping
+
+        super(ImageClassificationGame_1, self).__init__(dataset, budget, maxInteractions,
+                                                        modelFunction, labelCost, verbose)
+
+        self.stateSpace = self._calcSateSpace()
+        self.actionSpace = 2
+
+        self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled = [], [], [], []
+        self._initLabeledDataset(5)
+        self.currentTestF1, self.currentTestLoss = self._fitClassifier()
+        self.initialF1 = self.currentTestF1
+
+
+    def _calcSateSpace(self):
+        space = 0
+        modelMetrics = 3
+        space += len(self.classifier.get_weights()) * modelMetrics
+        predMetrics = 2
+        space += self.sampleSize * predMetrics
+        otherMetrics = 1
+        space += otherMetrics
+
+        return space
+
+
+    def _createState(self):
+        # prediction metrics
+        bVsSB = []
+        entropy = []
+        for i in range(self.currentStateIds.shape[1]):
+            x = self.xUnlabeled[self.currentStateIds[:, i]]
+            pred = self.classifier.predict(x)
+            struct = np.sort(pred, axis=1)
+
+            entropy.append(-np.sum(struct * np.log(struct), axis=1).reshape([1, -1]))
+            bVsSB.append(1 - (struct[:, -1] - struct[:, -2]).reshape([1, -1]))
+
+        meanBVsSB = np.mean(np.stack(bVsSB), axis=0)
+        meanEntropy = np.mean(np.stack(entropy), axis=0)
+
+        # model metrics
+        weights = self.classifier.get_weights()
+        modelMetrics = list()
+        for layer in weights:
+            modelMetrics += [np.mean(layer), np.std(layer), np.linalg.norm(layer)]  # , np.linalg.norm(layer, ord=2)]
+        modelMetrics = np.array(modelMetrics)
+
+        state = np.concatenate([np.array(np.mean(self.perClassF1)).reshape([1, -1]),
+                                modelMetrics.reshape([1, -1]),
+                                meanBVsSB,
+                                meanEntropy], axis=1)
+        return state
+
+
+    def reset(self, pointsPerClass=5):
+        self.numInteractions = 0
+        self.addedImages = 0
+        self.currentStateIds = np.random.choice(self.xUnlabeled.shape[0], (self.sampleSize, self.imgsToAvrg))
+
+        self.classifier = self.modelFunction(inputShape=self.x_train.shape[1:],
+                                             numClasses=self.y_train.shape[1])
+        self.initialWeights = self.classifier.get_weights()
+
+        self._initLabeledDataset(pointsPerClass)
+        self.currentTestF1, self.currentTestLoss = self._fitClassifier()
+        self.initialF1 = self.currentTestF1
+
+        return self._createState()
+
+
+    def step(self, action):
+        self.numInteractions += 1
+
+        if int(action) >= self.sampleSize:
+            # replace random image
+            self.currentStateIds[np.random.randint(0, self.sampleSize)] = np.random.choice(len(self.xUnlabeled), self.imgsToAvrg)
+            newTestF1 = self.currentTestF1 # reward of 0
+        else:
+            self.addedImages += self.imgsToAvrg
+            # add images to dataset
+            indices = self.currentStateIds[int(action)]
+            for a in range(len(indices)):
+                idx = indices[a]
+                self.xLabeled = np.append(self.xLabeled, self.xUnlabeled[idx:idx + 1], axis=0)
+                self.yLabeled = np.append(self.yLabeled, self.yUnlabeled[idx:idx + 1], axis=0)
+                self.xUnlabeled = np.delete(self.xUnlabeled, idx, axis=0)
+                self.yUnlabeled = np.delete(self.yUnlabeled, idx, axis=0)
+                # adjust indices of current state
+                for i in range(self.currentStateIds.shape[0]):
+                    if i != int(action):
+                        for j in range(self.currentStateIds.shape[1]):
+                            if idx < self.currentStateIds[i, j]:
+                                self.currentStateIds[i, j] -= 1
+                            elif idx == self.currentStateIds[i, j]:
+                                self.currentStateIds[i, j] = np.random.randint(len(self.xUnlabeled))
+                    else:
+                        for j in range(a+1, self.currentStateIds.shape[1]):
+                            if idx < self.currentStateIds[i, j]:
+                                self.currentStateIds[i, j] -= 1
+            # replace missing images
+            self.currentStateIds[int(action)] = np.random.choice(len(self.xUnlabeled), self.imgsToAvrg)
+            # retrain classifier
+            newTestF1, self.currentTestLoss = self._fitClassifier()
+
+        done = self.addedImages >= self.budget or \
+               self.numInteractions >= self.maxInteractions
+
+        if self.rewardShaping:
+            reward = newTestF1 - self.currentTestF1
+            self.currentTestF1 = 0.7 * self.currentTestF1 + 0.3 * newTestF1
+        elif done:
+            reward = self.currentTestF1 - self.initialF1
+        else:
+            reward = 0
+
+        if done and self.verbose:
+            print('inital F1 %1.4f \t current F1 %1.4f \t labeled Images %d \t reward %1.4f' % (
+                   self.initialF1, self.currentTestF1, self.xLabeled.shape[0], reward))
+        return self._createState(), reward, done, {}
+
+
+
 
 class ImageClassificationGame_2(ICGameBase):
 

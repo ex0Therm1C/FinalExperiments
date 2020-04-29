@@ -4,12 +4,12 @@ from time import time
 import tensorflow.keras as keras
 
 from core.Data import loadMNIST
-from core.Environment import ImageClassificationGame_2
+from core.Environment import ImageClassificationGame_1
 from core.ImageClassifier import ImageClassifier
-from core.Agent import DDQN_2
+from core.Agent import DDQN_1
 from core.Memory import Memory
 from core.Plotting import plot
-from core.Evaluation import scoreAgent, imgWasAdded_2
+from core.Evaluation import scoreAgent
 
 def saveFile(name, file):
     if os.path.exists(name + '.npy'):
@@ -47,7 +47,7 @@ SAMPLE_SIZE = 5
 C = 10
 minLoss = 0.4
 EVAL_ITERATIONS = 2#10
-name = 'DDQN_exp_2'
+name = 'DDQN_exp_1'
 MIN_INTERACTIONS = 50#4000
 MAX_INTERACTIONS_PER_GAME = 300
 exploration, conversion = 1500, 1000
@@ -57,19 +57,19 @@ print('planned interactions', MIN_INTERACTIONS)
 print(exploration, 'exploration', conversion, 'conversion')
 learningRate = parameterPlan(0.00005, 0.000001, exploration, conversion)
 
-env = ImageClassificationGame_2(dataset=(x_train, y_train, x_test, y_test),
+env = ImageClassificationGame_1(dataset=(x_train, y_train, x_test, y_test),
                                 modelFunction=ImageClassifier, budget=BUDGET,
                                 rewardShaping=REWARD_SHAPING, maxInteractions=MAX_INTERACTIONS_PER_GAME,
-                                sampleSize=SAMPLE_SIZE, labelCost=0.0)
+                                labelCost=0.0)
 memory = Memory(env, maxLength=1000)
 memory.loadFromDisk(memDir)
 
 ckptPath1 = os.path.join(cacheDir, 'ckpt')
 cp_callback = keras.callbacks.ModelCheckpoint(ckptPath1, verbose=0, save_freq=1, save_weights_only=True)
 if os.path.exists(ckptPath1 + '.index'):
-    model = DDQN_2(env, fromCheckpoints=ckptPath1)
+    model = DDQN_1(env, fromCheckpoints=ckptPath1)
 else:
-    model = DDQN_2(env)
+    model = DDQN_1(env)
 
 totalSteps = 0
 startTime = time()
@@ -129,21 +129,21 @@ saveFile(os.path.join(OUTPUT_FOLDER, 'imgCurve'), np.array(imgCurve))
 ############################################################
 # Evaluation
 
-env = ImageClassificationGame_2(dataset=(x_train, y_train, x_test, y_test),
+env = ImageClassificationGame_1(dataset=(x_train, y_train, x_test, y_test),
                                 modelFunction=ImageClassifier, budget=BUDGET,
                                 rewardShaping=REWARD_SHAPING, maxInteractions=BUDGET,
-                                sampleSize=SAMPLE_SIZE, labelCost=0.0)
+                                labelCost=0.0)
 env.verbose = False
 
 ckptPath = os.path.join(bestCacheDir, 'ckpt')
-agent = DDQN_2(env, fromCheckpoints=ckptPath)
+agent = DDQN_1(env, fromCheckpoints=ckptPath)
 lossCurves = []
 f1Curves = []
 
 for i in range(EVAL_ITERATIONS):
     print('%d ########################' % (i))
     try:
-        f1, loss = scoreAgent(agent, env, BUDGET, imgWasAdded_2)
+        f1, loss = scoreAgent(agent, env, BUDGET)
         lossCurves.append(loss)
         f1Curves.append(f1)
     except AssertionError:
