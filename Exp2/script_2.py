@@ -125,7 +125,7 @@ class ICGameBase:
         self.verbose = verbose
 
         self.es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=2)
-        self.bestMdlFile = '/tmp/best_mdl.h5'
+        self.bestMdlFile = 'output/best_mdl.h5'
         self.bestModelCB = keras.callbacks.ModelCheckpoint(self.bestMdlFile, save_best_only=True,
                                                            monitor='val_loss', mode='min')
 
@@ -493,7 +493,7 @@ def imgWasAdded_2(Q, a):
 ##################################################################
 # Training
 
-x_train, y_train, x_test, y_test = loadMNISTLocal()
+x_train, y_train, x_test, y_test = loadMNIST()
 
 lossCurve = []
 expCurve = []
@@ -512,9 +512,9 @@ BUDGET = 800
 SAMPLE_SIZE = 5
 C = 10
 minLoss = 0.4
-EVAL_ITERATIONS = 150
+EVAL_ITERATIONS = 10
 name = 'DDQN_exp_2'
-MIN_INTERACTIONS = 6000
+MIN_INTERACTIONS = 0#6000
 MAX_INTERACTIONS_PER_GAME = 2000
 exploration, conversion = 2000, 1000
 
