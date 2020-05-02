@@ -202,10 +202,10 @@ def plot(lossCurve, rewardCurve, expCurve, imgCurve, outDir, showPlots=False):
     ax1.legend(fontsize='small')
     # rewards
     ax2 = ax1.twinx()
-    avrgCurve = []
-    for i in range(1, len(rewardCurve)):
-        avrgCurve.append(np.mean(rewardCurve[max(0, i-30):i]))
-    ax2.plot(np.arange(len(avrgCurve)), avrgCurve, c='red', label='reward')
+    #avrgCurve = []
+    #for i in range(1, len(rewardCurve)):
+    #    avrgCurve.append(np.mean(rewardCurve[max(0, i-30):i]))
+    ax2.plot(np.arange(len(rewardCurve)), rewardCurve, c='red', label='reward')
     #ax2.set_ylim(-0.03, 0.03)
     ax2.axhline(y=0, color='k', linestyle='--', linewidth=1)
     ax2.legend(fontsize='small')
@@ -390,13 +390,13 @@ class ImageClassificationGame_2(ICGameBase):
             self.currentStateIds[int(action)] = np.random.choice(len(self.xUnlabeled), self.imgsToAvrg)
             # retrain classifier
             newTestF1, self.currentTestLoss = self._fitClassifier()
+            self.currentTestF1 = 0.7 * self.currentTestF1 + 0.3 * newTestF1
 
         done = self.addedImages >= self.budget or \
                self.numInteractions >= self.maxInteractions
 
         if self.rewardShaping:
             reward = newTestF1 - self.currentTestF1
-            self.currentTestF1 = 0.7 * self.currentTestF1 + 0.3 * newTestF1
         elif done:
             reward = self.currentTestF1 - self.initialF1
         else:
@@ -495,16 +495,20 @@ def imgWasAdded_2(Q, a):
 
 x_train, y_train, x_test, y_test = loadMNIST()
 
-lossCurve = []
-expCurve = []
-rewardCurve = []
-imgCurve = []
-
 OUTPUT_FOLDER = 'output'
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 memDir = os.path.join(OUTPUT_FOLDER, 'memory')
 cacheDir = os.path.join(OUTPUT_FOLDER, 'cache')
 bestCacheDir = os.path.join(OUTPUT_FOLDER, 'cacheBest')
+
+lossCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'lossCurve.npy')): lossCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'lossCurve.npy')))
+expCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'expCurve.npy')): expCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'expCurve.npy')))
+rewardCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'rewardCurve.npy')): rewardCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'rewardCurve.npy')))
+imgCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'imgCurve.npy')): imgCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'imgCurve.npy')))
 
 REWARD_SHAPING = False
 BATCH_SIZE = 64
@@ -512,16 +516,16 @@ BUDGET = 800
 SAMPLE_SIZE = 5
 C = 10
 minLoss = 0.4
-EVAL_ITERATIONS = 10
+EVAL_ITERATIONS = 15
 name = 'DDQN_exp_2'
-MIN_INTERACTIONS = 6000
-MAX_INTERACTIONS_PER_GAME = 2000
-exploration, conversion = 2000, 1000
+MIN_INTERACTIONS = 4000
+MAX_INTERACTIONS_PER_GAME = 3000
+exploration, conversion = 100, 1000
 
 greed = parameterPlan(1, 0.2, warmup=exploration, conversion=conversion)
 print('planned interactions', MIN_INTERACTIONS)
 print(exploration, 'exploration', conversion, 'conversion')
-learningRate = parameterPlan(0.001, 0.0001, exploration, conversion)
+learningRate = parameterPlan(0.0001, 0.00001, exploration, conversion)
 
 env = ImageClassificationGame_2(dataset=(x_train, y_train, x_test, y_test),
                                 modelFunction=ImageClassifier, budget=BUDGET,
@@ -595,34 +599,34 @@ saveFile(os.path.join(OUTPUT_FOLDER, 'imgCurve'), np.array(imgCurve))
 ############################################################
 # Evaluation
 
-# env = ImageClassificationGame_2(dataset=(x_train, y_train, x_test, y_test),
-#                                 modelFunction=ImageClassifier, budget=BUDGET,
-#                                 rewardShaping=REWARD_SHAPING, maxInteractions=3000,
-#                                 sampleSize=SAMPLE_SIZE, labelCost=0.0)
-# env.verbose = False
-#
-# ckptPath = os.path.join(bestCacheDir, 'ckpt')
-# agent = DDQN_2(env, fromCheckpoints=ckptPath)
-# lossCurves = []
-# f1Curves = []
-#
-# for i in range(EVAL_ITERATIONS):
-#     print('%d ########################' % (i))
-#     try:
-#         f1, loss = scoreAgent(agent, env, BUDGET, imgWasAdded_2)
-#         lossCurves.append(loss)
-#         f1Curves.append(f1)
-#     except AssertionError:
-#         pass
-#     except Exception as e:
-#         print(e)
-#
-# [print(len(l)) for l in lossCurves]
-# lossCurves = np.array(lossCurves)
-# lossCurves = np.mean(lossCurves, axis=0)
-# f1Curves = np.array(f1Curves)
-# f1Curves = np.mean(f1Curves, axis=0)
-#
-# file = os.path.join(OUTPUT_FOLDER, name)
-# saveFile(file + '_f1', f1Curves)
-# saveFile(file + '_loss', lossCurves)
+env = ImageClassificationGame_2(dataset=(x_train, y_train, x_test, y_test),
+                                modelFunction=ImageClassifier, budget=BUDGET,
+                                rewardShaping=REWARD_SHAPING, maxInteractions=3000,
+                                sampleSize=SAMPLE_SIZE, labelCost=0.0)
+env.verbose = False
+
+ckptPath = os.path.join(bestCacheDir, 'ckpt')
+agent = DDQN_2(env, fromCheckpoints=ckptPath)
+lossCurves = []
+f1Curves = []
+
+for i in range(EVAL_ITERATIONS):
+    print('%d ########################' % (i))
+    try:
+        f1, loss = scoreAgent(agent, env, BUDGET, imgWasAdded_2)
+        lossCurves.append(loss)
+        f1Curves.append(f1)
+    except AssertionError:
+        pass
+    except Exception as e:
+        print(e)
+
+[print(len(l)) for l in lossCurves]
+lossCurves = np.array(lossCurves)
+lossCurves = np.mean(lossCurves, axis=0)
+f1Curves = np.array(f1Curves)
+f1Curves = np.mean(f1Curves, axis=0)
+
+file = os.path.join(OUTPUT_FOLDER, name)
+saveFile(file + '_f1', f1Curves)
+saveFile(file + '_loss', lossCurves)

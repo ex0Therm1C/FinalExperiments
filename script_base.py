@@ -272,13 +272,17 @@ def parameterPlan(val1, val2, warmup, conversion):
 
 x_train, y_train, x_test, y_test = loadMNIST()
 
-lossCurve = []
-expCurve = []
-rewardCurve = []
-imgCurve = []
-
 OUTPUT_FOLDER = 'output'
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 memDir = os.path.join(OUTPUT_FOLDER, 'memory')
 cacheDir = os.path.join(OUTPUT_FOLDER, 'cache')
 bestCacheDir = os.path.join(OUTPUT_FOLDER, 'cacheBest')
+
+lossCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'lossCurve.npy')): lossCurve = np.load(os.path.join(OUTPUT_FOLDER, 'lossCurve.npy'))
+expCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'expCurve.npy')): expCurve = np.load(os.path.join(OUTPUT_FOLDER, 'expCurve.npy'))
+rewardCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'rewardCurve.npy')): rewardCurve = np.load(os.path.join(OUTPUT_FOLDER, 'rewardCurve.npy'))
+imgCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'imgCurve.npy')): imgCurve = np.load(os.path.join(OUTPUT_FOLDER, 'imgCurve.npy'))
