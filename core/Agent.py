@@ -24,7 +24,7 @@ class DDQN_1:
             keras.layers.BatchNormalization(),
             keras.layers.Dense(self.env.actionSpace)
         ])
-        model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.0001),
+        model.compile(optimizer=keras.optimizers.SGD(learning_rate=0.001),
                       loss=keras.losses.mse)
 
         if fromCheckpoint is not None and os.path.exists(fromCheckpoint + '.index'):
@@ -100,7 +100,7 @@ class DDQN_2:
             keras.layers.BatchNormalization(),
             keras.layers.Dense(self.env.actionSpace)
         ])
-        model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.0001),
+        model.compile(optimizer=keras.optimizers.SGD(learning_rate=0.001),
                       loss=keras.losses.mse)
 
         if fromCheckpoint is not None and os.path.exists(fromCheckpoint + '.index'):

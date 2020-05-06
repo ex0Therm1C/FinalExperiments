@@ -52,14 +52,14 @@ C = 10
 minLoss = 0.4
 EVAL_ITERATIONS = 10
 name = 'DDQN_exp_1'
-MIN_INTERACTIONS = 5000
+MIN_INTERACTIONS = 8000
 MAX_INTERACTIONS_PER_GAME = 1200
-exploration, conversion = 1000, 1000
+exploration, conversion = 3000, 3000
 
 greed = parameterPlan(1, 0.2, warmup=exploration, conversion=conversion)
 print('planned interactions', MIN_INTERACTIONS)
 print(exploration, 'exploration', conversion, 'conversion')
-learningRate = parameterPlan(0.00005, 0.000001, exploration, conversion)
+learningRate = parameterPlan(0.001, 0.00001, exploration, conversion)
 
 env = ImageClassificationGame_1(dataset=(x_train, y_train, x_test, y_test),
                                 modelFunction=ImageClassifier, budget=BUDGET,
