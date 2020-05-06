@@ -390,13 +390,16 @@ class ImageClassificationGame_2(ICGameBase):
             self.currentStateIds[int(action)] = np.random.choice(len(self.xUnlabeled), self.imgsToAvrg)
             # retrain classifier
             newTestF1, self.currentTestLoss = self._fitClassifier()
-            self.currentTestF1 = 0.7 * self.currentTestF1 + 0.3 * newTestF1
+            if not self.rewardShaping:
+                # With reward shaping we need to do this after the reward is calculated
+                self.currentTestF1 = 0.7 * self.currentTestF1 + 0.3 * newTestF1
 
         done = self.addedImages >= self.budget or \
                self.numInteractions >= self.maxInteractions
 
         if self.rewardShaping:
             reward = newTestF1 - self.currentTestF1
+            self.currentTestF1 = 0.7 * self.currentTestF1 + 0.3 * newTestF1
         elif done:
             reward = self.currentTestF1 - self.initialF1
         else:
@@ -406,6 +409,7 @@ class ImageClassificationGame_2(ICGameBase):
             print('inital F1 %1.4f \t current F1 %1.4f \t labeled Images %d \t reward %1.4f' % (
                    self.initialF1, self.currentTestF1, self.xLabeled.shape[0], reward))
         return self._createState(), reward, done, {}
+
 
 
 class DDQN_2:
