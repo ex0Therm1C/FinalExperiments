@@ -9,7 +9,7 @@ from core.ImageClassifier import ImageClassifier
 from core.Agent import DDQN_2
 from core.Memory import Memory
 from core.Plotting import plot
-from core.Evaluation import scoreAgent, imgWasAdded_2
+from core.Evaluation import scoreAgent
 
 def saveFile(name, file):
     if os.path.exists(name + '.npy'):

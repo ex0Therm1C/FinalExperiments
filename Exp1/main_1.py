@@ -28,11 +28,6 @@ def parameterPlan(val1, val2, warmup, conversion):
 
 x_train, y_train, x_test, y_test = loadMNIST()
 
-lossCurve = []
-expCurve = []
-rewardCurve = []
-imgCurve = []
-
 OUTPUT_FOLDER = 'output'
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 memDir = os.path.join(OUTPUT_FOLDER, 'memory')
@@ -40,17 +35,26 @@ cacheDir = os.path.join(OUTPUT_FOLDER, 'cache')
 bestCacheDir = os.path.join(OUTPUT_FOLDER, 'cacheBest')
 
 
+lossCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'lossCurve.npy')): lossCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'lossCurve.npy')))
+expCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'expCurve.npy')): expCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'expCurve.npy')))
+rewardCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'rewardCurve.npy')): rewardCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'rewardCurve.npy')))
+imgCurve = []
+if os.path.exists(os.path.join(OUTPUT_FOLDER, 'imgCurve.npy')): imgCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'imgCurve.npy')))
+
+
 REWARD_SHAPING = True
 BATCH_SIZE = 64
-BUDGET = 50#800
-SAMPLE_SIZE = 5
+BUDGET = 800
 C = 10
 minLoss = 0.4
-EVAL_ITERATIONS = 2#10
+EVAL_ITERATIONS = 10
 name = 'DDQN_exp_1'
-MIN_INTERACTIONS = 50#4000
-MAX_INTERACTIONS_PER_GAME = 300
-exploration, conversion = 1500, 1000
+MIN_INTERACTIONS = 5000
+MAX_INTERACTIONS_PER_GAME = 1200
+exploration, conversion = 1000, 1000
 
 greed = parameterPlan(1, 0.2, warmup=exploration, conversion=conversion)
 print('planned interactions', MIN_INTERACTIONS)
