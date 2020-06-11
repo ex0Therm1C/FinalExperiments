@@ -45,16 +45,16 @@ imgCurve = []
 if os.path.exists(os.path.join(OUTPUT_FOLDER, 'imgCurve.npy')): imgCurve = list(np.load(os.path.join(OUTPUT_FOLDER, 'imgCurve.npy')))
 
 
-REWARD_SHAPING = False
+REWARD_SHAPING = True
 BATCH_SIZE = 64
 BUDGET = 800
 C = 10
 minLoss = 0.4
-EVAL_ITERATIONS = 15
+EVAL_ITERATIONS = 30
 name = 'DDQN_exp_1'
 MIN_INTERACTIONS = 8000
 MAX_INTERACTIONS_PER_GAME = 1200
-exploration, conversion =3000, 3000
+exploration, conversion = 3000, 3000
 
 greed = parameterPlan(1, 0.2, warmup=exploration, conversion=conversion)
 print('planned interactions', MIN_INTERACTIONS)

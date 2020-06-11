@@ -9,7 +9,7 @@ from core.ImageClassifier import ImageClassifier
 from core.Agent import DDQN_2
 from core.Memory import Memory
 from core.Plotting import plot
-from core.Evaluation import scoreAgent, imgWasAdded_2
+from core.Evaluation import scoreAgent
 
 x_train, y_train, x_test, y_test = loadMNIST()
 
@@ -36,18 +36,18 @@ bestCacheDir = os.path.join(OUTPUT_FOLDER, 'cacheBest')
 
 
 BATCH_SIZE = 64
-BUDGET = 100#800
+BUDGET = 800
 SAMPLE_SIZE = 5
 C = 10
 IMG_TO_AVRG = 5
 GAME_LENGTH = 10
-REWARD_SCALE = 50
+REWARD_SCALE = 40
 minLoss = 0.4
-EVAL_ITERATIONS = 2#10
+EVAL_ITERATIONS = 15
 name = 'DDQN_exp_3'
-MIN_INTERACTIONS = 50#4000
-MAX_INTERACTIONS_PER_GAME = 30
-exploration, conversion = 1500, 1000
+MIN_INTERACTIONS = 5000
+MAX_INTERACTIONS_PER_GAME = 50
+exploration, conversion = 2000, 2000
 
 greed = parameterPlan(1, 0.2, warmup=exploration, conversion=conversion)
 print('planned interactions', MIN_INTERACTIONS)
@@ -142,7 +142,7 @@ f1Curves = []
 for i in range(EVAL_ITERATIONS):
     print('%d ########################' % (i))
     try:
-        f1, loss = scoreAgent(agent, env, BUDGET, imgWasAdded_2)
+        f1, loss = scoreAgent(agent, env, BUDGET)
         lossCurves.append(loss)
         f1Curves.append(f1)
     except AssertionError:
