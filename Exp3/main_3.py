@@ -45,9 +45,9 @@ REWARD_SCALE = 40
 minLoss = 0.4
 EVAL_ITERATIONS = 15
 name = 'DDQN_exp_3'
-MIN_INTERACTIONS = 5000
+MIN_INTERACTIONS = 2000#5000
 MAX_INTERACTIONS_PER_GAME = 50
-exploration, conversion = 2000, 2000
+exploration, conversion = 500, 500
 
 greed = parameterPlan(1, 0.2, warmup=exploration, conversion=conversion)
 print('planned interactions', MIN_INTERACTIONS)
