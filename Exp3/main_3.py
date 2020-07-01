@@ -3,15 +3,16 @@ import os, shutil
 from time import time
 import tensorflow.keras as keras
 
-from core.Data import loadMNIST
+#from core.Data import loadMNIST
+from core.Data import loadCifar
 from core.Environment import ImageClassificationGame_3
-from core.ImageClassifier import ImageClassifier
+from core.ImageClassifier import ImageClassifierCifar  #ImageClassifier
 from core.Agent import DDQN_2
 from core.Memory import Memory
 from core.Plotting import plot
 from core.Evaluation import scoreAgent
 
-x_train, y_train, x_test, y_test = loadMNIST()
+x_train, y_train, x_test, y_test = loadCifar() #loadMNIST()
 
 def saveFile(name, file):
     if os.path.exists(name + '.npy'):
@@ -36,18 +37,18 @@ bestCacheDir = os.path.join(OUTPUT_FOLDER, 'cacheBest')
 
 
 BATCH_SIZE = 64
-BUDGET = 800
+BUDGET = 1600#800
 SAMPLE_SIZE = 5
 C = 10
 IMG_TO_AVRG = 5
 GAME_LENGTH = 10
 REWARD_SCALE = 40
-minLoss = 0.4
-EVAL_ITERATIONS = 15
+minLoss = 0.8
+EVAL_ITERATIONS = 10
 name = 'DDQN_exp_3'
-MIN_INTERACTIONS = 2000#5000
+MIN_INTERACTIONS = 0#8000
 MAX_INTERACTIONS_PER_GAME = 50
-exploration, conversion = 500, 500
+exploration, conversion = 3000, 3000
 
 greed = parameterPlan(1, 0.2, warmup=exploration, conversion=conversion)
 print('planned interactions', MIN_INTERACTIONS)
@@ -55,7 +56,7 @@ print(exploration, 'exploration', conversion, 'conversion')
 learningRate = parameterPlan(0.00005, 0.000001, exploration, conversion)
 
 env = ImageClassificationGame_3(dataset=(x_train, y_train, x_test, y_test),
-                                modelFunction=ImageClassifier, budget=BUDGET,
+                                modelFunction=ImageClassifierCifar, budget=BUDGET,
                                 sampleSize=SAMPLE_SIZE, labelCost=0.0, imgsToAvrg=IMG_TO_AVRG,
                                 gameLength=GAME_LENGTH*IMG_TO_AVRG, maxInteractions=MAX_INTERACTIONS_PER_GAME,
                                 rewardScaling=REWARD_SCALE)
@@ -111,8 +112,8 @@ while totalSteps < MIN_INTERACTIONS:
         shutil.copytree(cacheDir, bestCacheDir)
     timePerStep = (time()-startTime) / float(totalSteps)
     etaSec = timePerStep * (MIN_INTERACTIONS - totalSteps - 1)
-    print('ETA %d min | \t steps %d \t loss per step %1.6f \t total steps %d \t greed %1.4f \t lr %1.6f \n'%(
-          int(etaSec / 60), steps, lossPerStep, totalSteps, g, lr))
+    print('ETA %1.2f h | \t steps %d \t loss per step %1.6f \t total steps %d \t greed %1.4f \t lr %1.6f \n'%(
+          etaSec / 60 / 60, steps, lossPerStep, totalSteps, g, lr))
     lossCurve.append(lossPerStep)
     expCurve.append(epochExpMean / steps)
     rewardCurve.append(epochRewards)
@@ -128,14 +129,23 @@ saveFile(os.path.join(OUTPUT_FOLDER, 'imgCurve'), np.array(imgCurve))
 ############################################################
 # Evaluation
 
-env = ImageClassificationGame_3(dataset=(x_train, y_train, x_test, y_test),
-                                modelFunction=ImageClassifier, budget=BUDGET,
-                                sampleSize=SAMPLE_SIZE, labelCost=0.0, imgsToAvrg=IMG_TO_AVRG,
-                                gameLength=BUDGET, maxInteractions=np.inf, verbose = False)
-env.verbose = False
 
-ckptPath = os.path.join(bestCacheDir, 'ckpt')
-agent = DDQN_2(env, fromCheckpoints=ckptPath)
+
+#ckptPath = os.path.join(bestCacheDir, 'ckpt')
+#agent = DDQN_2(env, fromCheckpoints=ckptPath)
+
+########################################################
+from core.Agent import Baseline_BvsSB, Baseline_Entropy, Baseline_Random
+print('\n\n\n random')
+env = ImageClassificationGame_3(dataset=(x_train, y_train, x_test, y_test),
+                                modelFunction=ImageClassifierCifar, budget=BUDGET,
+                                sampleSize=5, labelCost=0.0, imgsToAvrg=IMG_TO_AVRG,
+                                gameLength=BUDGET, maxInteractions=1000, verbose = False)
+
+name = 'random'
+agent = Baseline_Random(sampleSize=5)
+
+EVAL_ITERATIONS = 15
 lossCurves = []
 f1Curves = []
 
@@ -143,8 +153,9 @@ for i in range(EVAL_ITERATIONS):
     print('%d ########################' % (i))
     try:
         f1, loss = scoreAgent(agent, env, BUDGET)
-        lossCurves.append(loss)
-        f1Curves.append(f1)
+        if len(f1) == BUDGET:
+            lossCurves.append(loss)
+            f1Curves.append(f1)
     except AssertionError:
         pass
     except Exception as e:
@@ -159,3 +170,42 @@ f1Curves = np.mean(f1Curves, axis=0)
 file = os.path.join(OUTPUT_FOLDER, name)
 saveFile(file + '_f1', f1Curves)
 saveFile(file + '_loss', lossCurves)
+
+
+
+########################################################
+
+# print('\n\n\n   BvsSB')
+# env = ImageClassificationGame_3(dataset=(x_train, y_train, x_test, y_test),
+#                                 modelFunction=ImageClassifierCifar, budget=BUDGET,
+#                                 sampleSize=1000, labelCost=0.0, imgsToAvrg=IMG_TO_AVRG,
+#                                 gameLength=BUDGET, maxInteractions=1000, verbose = False)
+#
+# name = 'BvsSB_1000'
+# agent = Baseline_BvsSB()
+#
+#
+# lossCurves = []
+# f1Curves = []
+#
+# for i in range(EVAL_ITERATIONS):
+#     print('%d ########################' % (i))
+#     try:
+#         f1, loss = scoreAgent(agent, env, BUDGET)
+#         if len(f1) == BUDGET:
+#             lossCurves.append(loss)
+#             f1Curves.append(f1)
+#     except AssertionError:
+#         pass
+#     except Exception as e:
+#         print(e)
+#
+# [print(len(l)) for l in lossCurves]
+# lossCurves = np.array(lossCurves)
+# lossCurves = np.mean(lossCurves, axis=0)
+# f1Curves = np.array(f1Curves)
+# f1Curves = np.mean(f1Curves, axis=0)
+#
+# file = os.path.join(OUTPUT_FOLDER, name)
+# saveFile(file + '_f1', f1Curves)
+# saveFile(file + '_loss', lossCurves)

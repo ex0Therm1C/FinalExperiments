@@ -60,7 +60,7 @@ class ICGameBase:
     def _fitClassifier(self, epochs=50):
         self.classifier.set_weights(self.initialWeights)
         self.bestModelCB.best = np.inf
-        train_history = self.classifier.fit(self.xLabeled, self.yLabeled, epochs=epochs, verbose=0,
+        train_history = self.classifier.fit(self.xLabeled, self.yLabeled, batch_size=32, epochs=epochs, verbose=0,
                                             callbacks=[self.es, self.bestModelCB], validation_data=(self.x_test, self.y_test))
         if os.path.exists(self.bestMdlFile):
             self.classifier.load_weights(self.bestMdlFile)

@@ -152,3 +152,25 @@ class DDQN_2:
             self.model2.set_weights(self.model1.get_weights())
 
         return hist.history['loss'][0]
+
+
+class Baseline_Entropy:
+    def predict(self, state, greedParameter=0):
+        # env v3 cifar10 1000samplesize entropy scores
+        scores = state[:, 1037:2037]
+        return scores, np.argmax(scores, axis=1)
+
+
+class Baseline_BvsSB:
+    def predict(self, state, greedParameter=0):
+        # env v3 cifar10 1000samplesize BvsSB scores
+        scores = state[:, 37:1037]
+        return scores, np.argmax(scores, axis=1)
+
+
+class Baseline_Random:
+    def __init__(self, sampleSize):
+        self.sampleSize = sampleSize
+
+    def predict(self, state, greedParameter=0):
+        return np.random.rand(len(state), self.sampleSize), np.random.randint(self.sampleSize-1, size=len(state))

@@ -29,3 +29,13 @@ def loadMNISTLocal(numTest=1000):
     y_test = labelToOneHot(np.load('../mnist/y_test.npy')[:numTest], numLabels=10)
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
     return x_train, y_train, x_test, y_test
+
+
+def loadCifar(numTest=1000, numLabels=10):
+    (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+    y_train = keras.utils.to_categorical(y_train, numLabels)
+    x_train = np.array(x_train, dtype=float) / 255
+    y_test = keras.utils.to_categorical(y_test[:numTest], numLabels)
+    x_test = np.array(x_test, dtype=float)[:numTest] / 255
+    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+    return x_train, y_train, x_test, y_test

@@ -17,7 +17,7 @@ def scoreAgent(agent, env, numImgs, printInterval=50):
             print('%d | %d : %1.3f'%(i, env.addedImages, f1Prog[-1]))
         i += 1
 
-    print('stopping with', env.addedImages)
+    print('stopping with', len(f1Prog))
     if env.addedImages >= numImgs:
         return f1Prog, lossProg
     print('not converged')
