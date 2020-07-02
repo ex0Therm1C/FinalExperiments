@@ -135,56 +135,17 @@ saveFile(os.path.join(OUTPUT_FOLDER, 'imgCurve'), np.array(imgCurve))
 #agent = DDQN_2(env, fromCheckpoints=ckptPath)
 
 ########################################################
-from core.Agent import Baseline_BvsSB, Baseline_Entropy, Baseline_Random
-print('\n\n\n random')
-env = ImageClassificationGame_3(dataset=(x_train, y_train, x_test, y_test),
-                                modelFunction=ImageClassifierCifar, budget=BUDGET,
-                                sampleSize=5, labelCost=0.0, imgsToAvrg=IMG_TO_AVRG,
-                                gameLength=BUDGET, maxInteractions=1000, verbose = False)
-
-name = 'random'
-agent = Baseline_Random(sampleSize=5)
-
-EVAL_ITERATIONS = 15
-lossCurves = []
-f1Curves = []
-
-for i in range(EVAL_ITERATIONS):
-    print('%d ########################' % (i))
-    try:
-        f1, loss = scoreAgent(agent, env, BUDGET)
-        if len(f1) == BUDGET:
-            lossCurves.append(loss)
-            f1Curves.append(f1)
-    except AssertionError:
-        pass
-    except Exception as e:
-        print(e)
-
-[print(len(l)) for l in lossCurves]
-lossCurves = np.array(lossCurves)
-lossCurves = np.mean(lossCurves, axis=0)
-f1Curves = np.array(f1Curves)
-f1Curves = np.mean(f1Curves, axis=0)
-
-file = os.path.join(OUTPUT_FOLDER, name)
-saveFile(file + '_f1', f1Curves)
-saveFile(file + '_loss', lossCurves)
-
-
-
-########################################################
-
-# print('\n\n\n   BvsSB')
+# from core.Agent import Baseline_BvsSB, Bnaseline_Random
+# print('\n\n\n random')
 # env = ImageClassificationGame_3(dataset=(x_train, y_train, x_test, y_test),
 #                                 modelFunction=ImageClassifierCifar, budget=BUDGET,
-#                                 sampleSize=1000, labelCost=0.0, imgsToAvrg=IMG_TO_AVRG,
+#                                 sampleSize=5, labelCost=0.0, imgsToAvrg=IMG_TO_AVRG,
 #                                 gameLength=BUDGET, maxInteractions=1000, verbose = False)
 #
-# name = 'BvsSB_1000'
-# agent = Baseline_BvsSB()
+# name = 'random'
+# agent = Baseline_Random(sampleSize=5)
 #
-#
+# EVAL_ITERATIONS = 15
 # lossCurves = []
 # f1Curves = []
 #
@@ -209,3 +170,42 @@ saveFile(file + '_loss', lossCurves)
 # file = os.path.join(OUTPUT_FOLDER, name)
 # saveFile(file + '_f1', f1Curves)
 # saveFile(file + '_loss', lossCurves)
+
+
+
+########################################################
+from core.Agent import Baseline_BvsSB
+print('\n\n\n   BvsSB')
+env = ImageClassificationGame_3(dataset=(x_train, y_train, x_test, y_test),
+                                modelFunction=ImageClassifierCifar, budget=BUDGET,
+                                sampleSize=6000, labelCost=0.0, imgsToAvrg=IMG_TO_AVRG,
+                                gameLength=BUDGET, maxInteractions=1000, verbose = False)
+
+name = 'BvsSB_3000'
+agent = Baseline_BvsSB()
+
+
+lossCurves = []
+f1Curves = []
+
+for i in range(EVAL_ITERATIONS):
+    print('%d ########################' % (i))
+    try:
+        f1, loss = scoreAgent(agent, env, BUDGET)
+        if len(f1) == BUDGET:
+            lossCurves.append(loss)
+            f1Curves.append(f1)
+    except AssertionError:
+        pass
+    except Exception as e:
+        print(e)
+
+[print(len(l)) for l in lossCurves]
+lossCurves = np.array(lossCurves)
+lossCurves = np.mean(lossCurves, axis=0)
+f1Curves = np.array(f1Curves)
+f1Curves = np.mean(f1Curves, axis=0)
+
+file = os.path.join(OUTPUT_FOLDER, name)
+saveFile(file + '_f1', f1Curves)
+saveFile(file + '_loss', lossCurves)
